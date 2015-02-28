@@ -12,7 +12,6 @@ class FloatTable {
     
     String[] columns = split(rows[0], TAB);
     columnNames = subset(columns, 1);
-    scrubQuotes(columnNames);
     columnCount = columnNames.length;
 
     rowNames = new String[rows.length-1];
@@ -26,25 +25,13 @@ class FloatTable {
         continue;  
       }
       String[] pieces = split(rows[i], TAB);
-      scrubQuotes(pieces);
       rowNames[rowCount] = pieces[0];
       data[rowCount] = parseFloat(subset(pieces, 1));
       rowCount++;      
     }
     data = (float[][]) subset(data, 0, rowCount);
   }
-    
-  void scrubQuotes(String[] array) {
-    for (int i = 0; i < array.length; i++) {
-      if (array[i].length() > 2) {
-        if (array[i].startsWith("\"") && array[i].endsWith("\"")) {
-          array[i] = array[i].substring(1, array[i].length() - 1);
-        }
-      }
-      array[i] = array[i].replaceAll("\"\"", "\"");
-    }
-  }
-    
+  
   int getRowCount() {
     return rowCount;
   }
