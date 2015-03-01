@@ -1,9 +1,11 @@
 FloatTable data;
 PFont title, axis, label;
 int space;
+int current;
 
 void setup(){
   size(1000, 600);
+  current = 0;
   space = 75;
   data = new FloatTable("WorldData.tsv");
   title = createFont("Times New Roman", 24);
@@ -19,6 +21,7 @@ void draw(){
   textFont(title);
   text("Change in World Population by Country", width/2, 30);
   drawAxis();
+  plotPoints();
 }
 
 void drawAxis(){
@@ -28,8 +31,6 @@ void drawAxis(){
   
   xAxis();
   yAxis();
-  
-  plotPoints();
 }
 
 void xAxis(){
@@ -50,22 +51,33 @@ void yAxis(){
   textFont(axis);
   textAlign(RIGHT, CENTER);
   int n = space;
-  int gap = 15;
+  int gap = 14;
   float div = (height-2*n)/gap;
   float step = (data.getTableMax())/gap;
-  for(int i = 0; i < gap; i++){
+  for(int i = 0; i < gap+1; i++){
     line(n-5,(height-n)-div*i,n,(height-n)-div*i);
-    text(nf((step*i)/1000000,0,2)+"",n-15,(height-n)-div*i);
+    text(nf((step*i)/1000000,0,1)+"",n-15,(height-n)-div*i);
   }
 }
 
 void plotPoints(){
-  float div = (width-1.9*space)/data.getColumnCount();
   for (int i = 0; i < data.getRowCount(); i++){
-    for(int j = 0; j < data.getColumnCount(); j++){
-      float x = space + (Integer.parseInt(data.getColumnName(j)) - Integer.parseInt(data.getColumnName(0)))*div;
-      float y = map(data.getFloat(i,j), 0, data.getTableMax(), height-space, space);
-      point(x,y);
-    }
+     singleLine(i);
+  }
+}
+
+void singleLine(int i){
+  float x, y;
+  float prevX = 0;
+  float prevY = 0;
+  float div = (width-1.9*space)/data.getColumnCount();
+  for(int j = 0; j < data.getColumnCount(); j++){
+    x = space + (Integer.parseInt(data.getColumnName(j)) - Integer.parseInt(data.getColumnName(0)))*div;
+    y = map(data.getFloat(i,j), 0, data.getTableMax(), height-space, space);
+    // point(x,y);
+    if (j > 0)
+      line(x,y,prevX,prevY);
+    prevX = x;
+    prevY = y;
   }
 }
