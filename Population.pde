@@ -1,12 +1,16 @@
 FloatTable data;
+String[] worldData;
 PFont title, axis, label;
 int space;
-int current;
+int current, currentYear;
 int rows, columns;
+boolean pie;
 
 void setup(){
-  size(1000, 700);
+  size(800, 600);
   space = 75;
+  pie = false;
+  worldData = loadStrings("EntireWorld.tsv");
   data = new FloatTable("WorldData.tsv");
   rows = data.getRowCount();
   columns = data.getColumnCount();
@@ -14,6 +18,7 @@ void setup(){
   axis = createFont("Times New Roman", 12);
   label = createFont("Times New Roman", 18);
   current = rows;
+  currentYear = 0;
 }
 
 void draw(){
@@ -21,15 +26,23 @@ void draw(){
   fill(0);
   stroke(0);
   drawTitle();
+  if (pie == false){
   drawAxis();
   //drawCountries();
   drawData();
+  }
+  else{
+    drawPie();
+  }
 }
 
 void drawTitle(){
   textAlign(CENTER);
   textFont(title);
-  text("Change in World Population by Country", width/2, 30);
+  if (pie == false)
+    text("Change in World Population by Country", width/2, 30);
+  else
+    text("Division of World Population by Year", width/2, 30);
 }
 
 void drawAxis(){
@@ -52,13 +65,14 @@ void xAxis(){
       text(x[i],n+div*i,height -(n/1.5));
   }
   textFont(label);
-  text("Year", width/2, height - (n/5));
+  text("Year", width/2, height - (n/3));
 }
 
 void yAxis(){
   textFont(axis);
-  textAlign(RIGHT, CENTER);
   int n = space;
+  text("People\n(Millions)", n/2 + 10, n/2);
+  textAlign(RIGHT, CENTER);
   int gap = 14;
   float div = (height-2*n)/gap;
   float step = (data.getTableMax())/gap;
@@ -112,6 +126,21 @@ void drawCountries(){
   }
 }
 
+void drawPie(){
+  xAxis();
+  text(data.getColumnName(currentYear), width/2, space/1.5);
+  noStroke();
+  int r = 200;
+  ellipse(width/2, height/2, r, r);
+  
+  int stop;
+  int start = 0;
+  for ( int i = 0; i < rows; i++){
+    arc(width/2, height/2, r, r,start, stop);
+    stop = start;
+  }
+}
+
 void keyPressed(){
   if (key == 'a'){
     current--;
@@ -122,5 +151,8 @@ void keyPressed(){
     current++;
     if (current > rows)
       current = 0;
+  }
+  if (key == ' '){
+    pie = !pie;
   }
 }
