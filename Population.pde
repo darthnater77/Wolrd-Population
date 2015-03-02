@@ -1,5 +1,5 @@
 FloatTable data;
-String[] worldData;
+float[] world;
 PFont title, axis, label;
 int space;
 int current, currentYear;
@@ -10,13 +10,21 @@ void setup(){
   size(800, 600);
   space = 75;
   pie = false;
-  worldData = loadStrings("EntireWorld.tsv");
+  
+  String[] worldData = loadStrings("EntireWorld.tsv");
+  world = new float[worldData.length];
+  for (int i = 0; i < worldData.length; i++){
+    world[i] = Float.parseFloat(worldData[i]);
+  }
+  
   data = new FloatTable("WorldData.tsv");
   rows = data.getRowCount();
   columns = data.getColumnCount();
+  
   title = createFont("Times New Roman", 24);
   axis = createFont("Times New Roman", 12);
   label = createFont("Times New Roman", 18);
+  
   current = rows;
   currentYear = 0;
 }
@@ -27,12 +35,13 @@ void draw(){
   stroke(0);
   drawTitle();
   if (pie == false){
-  drawAxis();
-  //drawCountries();
-  drawData();
+    drawAxis();
+    //drawCountries();
+    drawData();
   }
   else{
     drawPie();
+    pieText();
   }
 }
 
@@ -61,7 +70,9 @@ void xAxis(){
   float div = (width-1.9*n)/x.length;
   for(int i = 0; i < x.length; i++){
     line(n+div*i,height-n,n+div*i,height-n+5);
-    if (i%5 == 0)
+    if (i%5 == 0 && !pie)
+      text(x[i],n+div*i,height -(n/1.5));
+    else if (i == currentYear && pie)
       text(x[i],n+div*i,height -(n/1.5));
   }
   textFont(label);
@@ -128,29 +139,46 @@ void drawCountries(){
 
 void drawPie(){
   xAxis();
-  text(data.getColumnName(currentYear), width/2, space/1.5);
   noStroke();
-  int r = 200;
+  float r = map(world[currentYear],world[0],world[columns-1],200,400);
   ellipse(width/2, height/2, r, r);
   
   int stop;
   int start = 0;
   for ( int i = 0; i < rows; i++){
-    arc(width/2, height/2, r, r,start, stop);
+    //arc(width/2, height/2, r, r,start, stop);
     stop = start;
   }
 }
 
+void pieText(){
+  text(data.getColumnName(currentYear), width/2, space/1.5);
+}
+
 void keyPressed(){
   if (key == 'a'){
-    current--;
-    if (current < 0)
-      current = rows;
+    if (!pie){
+      current--;
+      if (current < 0)
+        current = rows;
+    }
+    else{
+      currentYear--;
+      if (currentYear < 0)
+        currentYear = columns-1;     
+    }
   }
   else if (key == 's'){
-    current++;
-    if (current > rows)
-      current = 0;
+    if (!pie){
+      current--;
+      if (current > rows)
+        current = 0;
+    }
+    else{
+      currentYear++;
+      if (currentYear >= columns)
+        currentYear = 0;     
+    }
   }
   if (key == ' '){
     pie = !pie;
