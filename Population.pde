@@ -9,7 +9,7 @@ boolean pie;
 void setup(){
   size(900, 700);
   space = 75;
-  pie = false;
+  pie = true;
   
   String[] worldData = loadStrings("EntireWorld.tsv");
   world = new float[worldData.length];
@@ -73,8 +73,12 @@ void xAxis(){
     line(n+div*i,height-n,n+div*i,height-n+5);
     if (i%5 == 0 && !pie)
       text(x[i],n+div*i,height -(n/1.5));
-    else if (i == currentYear && pie)
-      text(x[i],n+div*i,height -(n/1.5));
+    else if (pie){
+      if(mouseX > n+div*(i-.5) && mouseX < n+div*(i+.5) && mouseY > height-1.25*n && mouseY < height-.5*n)
+        currentYear = i;
+      if (i == currentYear && pie)
+        text(x[i],n+div*i,height -(n/1.5));
+    }
   }
   textFont(label);
   if (!pie)
@@ -123,12 +127,15 @@ void drawData(){
   textAlign(CENTER);
   textFont(label);
   if (current < rows){
+    stroke(200);
+    plotAll();
+    stroke(0);
     singleLine(current);
     text(data.getRowName(current), width/2, space/1.5);
   }
   else{
-    plotAll();
     text("All Countries", width/2, space/1.5);
+    plotAll();
   }
 }
 
@@ -138,7 +145,18 @@ void drawCountries(){
   textAlign(LEFT,BOTTOM);
   float div = (height)/rows;
   for (int i = 0; i < rows; i++){
-    text(data.getRowName(i),width-space*1.5,space/3+div*i);
+    if (i != current)
+      text(data.getRowName(i),width-space*1.5,space/3+div*i);
+    else{
+      fill(255,0,0);
+      textFont(axis);
+      text(data.getRowName(i),width-space*1.6,space/3+div*i);
+      fill(0);
+      textFont(list);
+    }
+    if (mouseX < width && mouseX > width-space*1.75 && mouseY < space/3+div*i && mouseY > space/3+div*(i-1)){
+      current = i;
+    }
   }
 }
 
@@ -151,10 +169,13 @@ void drawPie(){
   float stop;
   float start = 0;
   for (int i = 0; i < rows; i++){
-    fill(i);
+    if (i != current)
+      fill(i);
+    else
+      fill(255,0,0);
     stop = start + (2*PI)*(data.getFloat(i,currentYear)/world[currentYear]);
     arc(width/2, height/2, r, r,start, stop);
-    stop = start;
+    start = stop;
   }
 }
 
@@ -189,5 +210,7 @@ void keyPressed(){
   }
   if (key == ' '){
     pie = !pie;
+    current = rows;
+    currentYear = 0;
   }
 }
