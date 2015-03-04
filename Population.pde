@@ -1,37 +1,33 @@
 FloatTable data;
-float[] world;
+float[] yearTotals;
 PFont title, axis, label, list;
-int space;
+int n;  // margin
 int current, currentYear;
 int rows, columns;
 boolean pie;
 
 void setup(){
   size(900, 700);
-  space = 75;
-  pie = true;
-  
-  String[] worldData = loadStrings("EntireWorld.tsv");
-  world = new float[worldData.length];
-  for (int i = 0; i < worldData.length; i++){
-    world[i] = Float.parseFloat(worldData[i]);
-  }
-  
+  n = 75;
+  pie = true; 
   data = new FloatTable("WorldData.tsv");
   rows = data.getRowCount();
-  columns = data.getColumnCount();
-  
+  columns = data.getColumnCount();  
+  yearTotals = new float[columns];
+  for (int i = 0; i < columns; i++){
+    for (int j = 0; j < rows; j++)
+    yearTotals[i] += data.getFloat(j, i);
+  }  
   title = createFont("Times New Roman", 24);
   axis = createFont("Times New Roman", 12);
   label = createFont("Times New Roman", 18);
-  list = createFont("Times New Roman", 10);
-  
+  list = createFont("Times New Roman", 10);  
   current = rows;
   currentYear = 0;
 }
 
 void draw(){
-  background(255);
+  background(255, 254, 76);
   fill(0);
   stroke(0);
   drawTitle();
@@ -56,17 +52,16 @@ void drawTitle(){
 }
 
 void drawAxis(){
-  int n = space;
   line(n,n,n,height-n);
-  line(n,height-n,width-2*n,height-n);
-  
+  line(n,height-n,width-2*n,height-n);  
   xAxis();
-  yAxis();
+  yAxis(); 
+  textFont(label);
+  text("Year", width/2, height - (n/3));
 }
 
 void xAxis(){
   textFont(axis);
-  int n = space;
   String [] x = data.getColumnNames();
   float div = (width-2.9*n)/x.length;
   for(int i = 0; i < x.length; i++){
@@ -80,16 +75,10 @@ void xAxis(){
         text(x[i],n+div*i,height -(n/1.5));
     }
   }
-  textFont(label);
-  if (!pie)
-    text("Year", width/2, height - (n/3));
-  else
-    text("World Population: " + nf(world[currentYear]/1000000000,0,3) + " Billion", width/2, height - (n/3));
 }
 
 void yAxis(){
   textFont(axis);
-  int n = space;
   text("People\n(Millions)", n/2 + 10, n/2);
   textAlign(RIGHT, CENTER);
   int gap = 14;
@@ -101,20 +90,14 @@ void yAxis(){
   }
 }
 
-void plotAll(){
-  for (int i = 0; i < rows; i++){
-     singleLine(i);
-  }
-}
-
 void singleLine(int i){
   float x, y;
   float prevX = 0;
   float prevY = 0;
-  float div = (width-2.9*space)/columns;
+  float div = (width-2.9*n)/columns;
   for(int j = 0; j < columns; j++){
-    x = space + (Integer.parseInt(data.getColumnName(j)) - Integer.parseInt(data.getColumnName(0)))*div;
-    y = map(data.getFloat(i,j), 0, data.getTableMax(), height-space, space);
+    x = n + (Integer.parseInt(data.getColumnName(j)) - Integer.parseInt(data.getColumnName(0)))*div;
+    y = map(data.getFloat(i,j), 0, data.getTableMax(), height-n, n);
     // point(x,y);
     if (j > 0)
       line(x,y,prevX,prevY);
@@ -127,15 +110,17 @@ void drawData(){
   textAlign(CENTER);
   textFont(label);
   if (current < rows){
-    stroke(200);
-    plotAll();
+    stroke(150, 50);
+    for (int i = 0; i < rows; i++)
+      singleLine(i);
     stroke(0);
     singleLine(current);
-    text(data.getRowName(current), width/2, space/1.5);
+    text(data.getRowName(current), width/2, n/1.5);
   }
   else{
-    text("All Countries", width/2, space/1.5);
-    plotAll();
+    text("All Countries", width/2, n/1.5);
+    for (int i = 0; i < rows; i++)
+      singleLine(i);
   }
 }
 
@@ -143,44 +128,52 @@ void drawCountries(){
   fill(0);
   textFont(list);
   textAlign(LEFT,BOTTOM);
-  float div = (height)/rows;
+  float div = height/rows;
   for (int i = 0; i < rows; i++){
     if (i != current)
-      text(data.getRowName(i),width-space*1.5,space/3+div*i);
+      text(data.getRowName(i),width-n*1.5,n/3+div*i);
     else{
       fill(255,0,0);
       textFont(axis);
-      text(data.getRowName(i),width-space*1.6,space/3+div*i);
+      text(data.getRowName(i),width-n*1.6,n/3+div*i);
       fill(0);
       textFont(list);
     }
-    if (mouseX < width && mouseX > width-space*1.75 && mouseY < space/3+div*i && mouseY > space/3+div*(i-1)){
+    if (mouseX < width && mouseX > width-n*1.75 && mouseY < n/3+div*i && mouseY > n/3+div*(i-1))
       current = i;
-    }
-  }
+  } 
+  if (mouseX < width-n*1.75)
+    current = rows;
 }
 
 void drawPie(){
   xAxis();
   noStroke();
-  float r = map(world[currentYear],world[0],world[columns-1],200,500);
-  ellipse(width/2, height/2, r, r);
+  float r = map(yearTotals[currentYear],yearTotals[0],yearTotals[columns-1],200,500);
   
   float stop;
   float start = 0;
   for (int i = 0; i < rows; i++){
     if (i != current)
-      fill(i);
+      fill(i%27+3,i%7*2+20, 2*i%39);
     else
       fill(255,0,0);
-    stop = start + (2*PI)*(data.getFloat(i,currentYear)/world[currentYear]);
+    stop = start + (2*PI)*(data.getFloat(i,currentYear)/yearTotals[currentYear]);
     arc(width/2, height/2, r, r,start, stop);
     start = stop;
   }
 }
 
 void pieText(){
-  text(data.getColumnName(currentYear), width/2, space/1.5);
+  fill(0);
+  textFont(label);
+  text("World Population: " + nf(yearTotals[currentYear]/1000000000,0,3) + " Billion", width/2, height - (n/3));
+  text(data.getColumnName(currentYear), width/2, n/1.5);
+  textAlign(LEFT);
+  text("Year", n/3, height-n+8);
+  if (current < rows){
+    text(data.getRowName(current)+"\nPopulation: "+nf(data.getFloat(current, currentYear)/1000000, 0, 2)+" Million\n"+nf(data.getFloat(current, currentYear)/yearTotals[currentYear]*100, 0, 2)+"% of world population", n/2, height/5);
+  }
 }
 
 void keyPressed(){
